@@ -15,28 +15,36 @@ import static org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi.DFLT_PORT;
 
 @Configuration
 public class IgniteProvider {
-    private Log log = LogFactory.getLog(IgniteProvider.class);
+    private static final Log LOG = LogFactory.getLog(IgniteProvider.class);
     private final Ignite ignite;
-    private boolean started = false;
 
     public IgniteProvider() {
+        boolean started = false;
         try {
             Ignition.ignite("testGrid-client");
             started = true;
         } catch (IgniteIllegalStateException e) {
-            log.debug("Using the Ignite instance that has been already started.");
+            LOG.debug("Using the Ignite instance that has been already started.");
         }
         if (started)
             ignite = Ignition.ignite("testGrid-client");
         else {
-            ignite = Ignition.start("test-client-config.xml");
+            ignite = Ignition.start(CacheUtils.CLIENT_CONFIG);
             ((TcpDiscoverySpi) ignite.configuration().getDiscoverySpi())
                     .getIpFinder()
                     .registerAddresses(Collections.singletonList(new InetSocketAddress("localhost", DFLT_PORT)));
         }
     }
 
-    public Ignite getIgnite() {
+    static Ignite getServerNode() {
+        return Ignition.start(CacheUtils.SERVER_CONFIG);
+    }
+
+    static Ignite getServerNode(String configFile) {
+        return Ignition.start(configFile);
+    }
+
+    Ignite getIgnite() {
         return ignite;
     }
 }
